@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ms-cosechas
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ms-cosechas
+  template:
+    metadata:
+      labels:
+        app: ms-cosechas
+    spec:
+      containers:
+        - name: ms-cosechas
+          image: zuix1384/ms-agricultor:latest
+          ports:
+            - containerPort: 8002
+          env:
+            - name: DB_URL
+              value: "mysql+pymysql://root:taco@mysql-cosechas:3306/agricultores"
+            - name: RABBITMQ_HOST
+              value: "rabbitmq"
+            - name: RABBITMQ_PORT
+              value: "5672"
+            - name: RABBITMQ_USER
+              value: "admin"
+            - name: RABBITMQ_PASS
+              value: "admin"
+            - name: RABBITMQ_VHOST
+              value: "/"
+            - name: RABBITMQ_PUBLISH_QUEUE
+              value: "eventos_cosecha"
+            - name: RABBITMQ_PUBLISH_QUEUE_FACTURAS
+              value: "eventos_cosecha_facturas"
+            - name: RABBITMQ_CONSUME_QUEUE_INVENTARIO
+              value: "inventario_ajustado"
+            - name: RABBITMQ_CONSUME_QUEUE_FACTURAS
+              value: "facturas_estado"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ms-cosechas
+spec:
+  selector:
+    app: ms-cosechas
+  ports:
+    - protocol: TCP
+      port: 8002
+      targetPort: 8002

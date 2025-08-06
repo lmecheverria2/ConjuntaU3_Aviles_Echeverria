@@ -1,17 +1,18 @@
-from pydantic import BaseModel, UUID4, Field
-from typing import Optional
+from pydantic import BaseModel, Field, ConfigDict
+from typing import List
+from uuid import UUID
 
 class CosechaBase(BaseModel):
-    agricultor_id: UUID4
+    agricultor_id: str
     producto: str
     toneladas: float
+    requiere_insumos: List[str] = []
 
 class CosechaCreate(CosechaBase):
-    pass
+    id: UUID = Field(..., alias="cosecha_id")
 
-class CosechaOut(CosechaBase):
-    id: UUID4
+class CosechaResponse(CosechaBase):
+    id: UUID
     estado: str
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
