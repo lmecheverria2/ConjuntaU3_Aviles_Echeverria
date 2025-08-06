@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ms-facturas
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ms-facturas
+  template:
+    metadata:
+      labels:
+        app: ms-facturas
+    spec:
+      containers:
+        - name: ms-facturas
+          image: zuix1384/ms-facturas:latest
+          ports:
+            - containerPort: 8001
+          env:
+            - name: DATABASE_URL
+              value: "postgresql://postgres:taco@postgres-factura:5432/factura"
+            - name: RABBITMQ_HOST
+              value: "rabbitmq"
+            - name: RABBITMQ_PORT
+              value: "5672"
+            - name: RABBITMQ_USER
+              value: "admin"
+            - name: RABBITMQ_PASS
+              value: "admin"
+            - name: RABBITMQ_VHOST
+              value: "/"
+            - name: RABBITMQ_CONSUME_QUEUE_FACTURAS
+              value: "eventos_cosecha_facturas"
+            - name: RABBITMQ_PUBLISH_QUEUE_FACTURAS
+              value: "facturas_estado"
+            - name: RABBITMQ_PREFETCH
+              value: "10"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ms-facturas
+spec:
+  selector:
+    app: ms-facturas
+  ports:
+    - protocol: TCP
+      port: 8001
+      targetPort: 8001

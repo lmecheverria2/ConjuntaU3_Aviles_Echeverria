@@ -1,0 +1,36 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-inventario
+spec:
+  selector:
+    app: postgres-inventario
+  ports:
+    - port: 5432
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres-inventario
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres-inventario
+  template:
+    metadata:
+      labels:
+        app: postgres-inventario
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:15
+          env:
+            - name: POSTGRES_DB
+              value: "inventario"
+            - name: POSTGRES_USER
+              value: "postgres"
+            - name: POSTGRES_PASSWORD
+              value: "taco"
+          ports:
+            - containerPort: 5432
