@@ -11,13 +11,11 @@ from sqlalchemy.orm import Session
 from database import SessionLocal
 from app.models.factura import Factura
 
+from app.models.precio import Precio
+
 load_dotenv()
 
 # ===== Precios referencia (USD/tonelada) =====
-PRECIOS = {
-    "Arroz Oro": 120.0,
-    "Café Premium": 300.0,
-}
 
 # ===== RabbitMQ =====
 RABBITMQ_URL = os.getenv("RABBITMQ_URL")  # amqp://user:pass@host:5672/vhost  (opcional)
@@ -50,10 +48,11 @@ def _get_conn_channel():
     channel.basic_qos(prefetch_count=PREFETCH_COUNT)
     return connection, channel
 
-def _calcular_monto(producto: str, toneladas: float) -> float:
-    if producto not in PRECIOS:
-        raise ValueError(f"Producto sin precio configurado: '{producto}'")
-    return round(float(toneladas) * float(PRECIOS[producto]), 2)
+def _calcular_monto(db: Session, producto: str, toneladas: float) -> float:
+    precio = db.query(Precio).filter(Precio.nombre == producto).first()
+    if not precio:
+        raise ValueError(f"Producto sin precio configurado en BD: '{producto}'")
+    return round(float(toneladas) * float(precio.precio), 2)
 
 def _crear_factura(db: Session, cosecha_id: str, monto: float) -> str:
     factura_id = str(uuid.uuid4())
@@ -91,7 +90,7 @@ def _procesar(channel, method, properties, body: bytes):
         if not (producto and toneladas and cosecha_id):
             raise ValueError("Mensaje incompleto: requiere 'producto', 'toneladas', 'cosecha_id'.")
 
-        monto = _calcular_monto(producto, toneladas)
+        monto = _calcular_monto(db, producto, toneladas)
         factura_id = _crear_factura(db, cosecha_id, monto)
         _publicar_estado(channel, factura_id)
         channel.basic_ack(delivery_tag=method.delivery_tag)

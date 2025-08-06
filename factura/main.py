@@ -1,13 +1,17 @@
 from fastapi import FastAPI
 from database import Base, engine
-from app.models import factura as factura_model
+from app.models import factura as factura_model, precio as precio_model
 from rabbit import start_consumer
 import threading
+from app.routes import precio as precio_router, factura as factura_router
 
 # Crea tablas
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="MS Facturas")
+
+app.include_router(precio_router.router)
+app.include_router(factura_router.router)
 
 @app.on_event("startup")
 def startup_event():
