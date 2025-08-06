@@ -1,0 +1,36 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-factura
+spec:
+  selector:
+    app: postgres-factura
+  ports:
+    - port: 5432
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres-factura
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres-factura
+  template:
+    metadata:
+      labels:
+        app: postgres-factura
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:15
+          env:
+            - name: POSTGRES_DB
+              value: "factura"
+            - name: POSTGRES_USER
+              value: "postgres"
+            - name: POSTGRES_PASSWORD
+              value: "taco"
+          ports:
+            - containerPort: 5432

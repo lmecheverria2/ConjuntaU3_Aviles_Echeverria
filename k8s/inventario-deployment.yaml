@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ms-inventario
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ms-inventario
+  template:
+    metadata:
+      labels:
+        app: ms-inventario
+    spec:
+      containers:
+        - name: inventario
+          image: zuix1384/ms-inventario:latest  # reemplázalo tras el push
+          ports:
+            - containerPort: 8000
+          env:
+            - name: DATABASE_URL
+              value: postgresql://postgres:taco@postgres-inventario:5432/inventario
+            - name: RABBITMQ_HOST
+              value: rabbitmq
+            - name: RABBITMQ_PORT
+              value: "5672"
+            - name: RABBITMQ_USER
+              value: admin
+            - name: RABBITMQ_PASS
+              value: admin
+            - name: RABBITMQ_VHOST
+              value: /
+            - name: RABBITMQ_CONSUME_QUEUE
+              value: eventos_cosecha
+            - name: RABBITMQ_PUBLISH_QUEUE
+              value: inventario_ajustado
+            - name: RABBITMQ_PREFETCH
+              value: "10"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ms-inventario
+spec:
+  selector:
+    app: ms-inventario
+  ports:
+    - protocol: TCP
+      port: 8000
+      targetPort: 8000
