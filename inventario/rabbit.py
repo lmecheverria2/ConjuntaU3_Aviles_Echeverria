@@ -22,6 +22,15 @@ RABBITMQ_VHOST = os.getenv("RABBITMQ_VHOST", "/")
 
 QUEUE_CONSUME = os.getenv("RABBITMQ_CONSUME_QUEUE", "eventos_cosecha")
 QUEUE_PUBLISH = os.getenv("RABBITMQ_PUBLISH_QUEUE", "inventario_ajustado")
+print("Conectando a RabbitMQ:", {
+    "url": bool(RABBITMQ_URL),
+    "host": RABBITMQ_HOST,
+    "port": RABBITMQ_PORT,
+    "user": RABBITMQ_USER,
+    "vhost": RABBITMQ_VHOST,
+    "consume": QUEUE_CONSUME,
+    "publish": QUEUE_PUBLISH,
+})
 
 # === Parámetros de consumo ===
 PREFETCH_COUNT = int(os.getenv("RABBITMQ_PREFETCH", "10"))
@@ -162,6 +171,21 @@ def procesar_mensaje(channel, method, properties, body: bytes):
 def main():
     connection, channel = get_connection_and_channel()
     print(f"[*] Esperando mensajes en '{QUEUE_CONSUME}'. Ctrl+C para salir.")
+    channel.basic_consume(queue=QUEUE_CONSUME, on_message_callback=procesar_mensaje)
+    try:
+        channel.start_consuming()
+    except KeyboardInterrupt:
+        print("\nCerrando consumidor…")
+    finally:
+        if channel.is_open:
+            channel.close()
+        if connection.is_open:
+            connection.close()
+
+
+def start_consumer():
+    connection, channel = get_connection_and_channel()
+    print(f"[*] Inventario escuchando '{QUEUE_CONSUME}'. Ctrl+C para salir.")
     channel.basic_consume(queue=QUEUE_CONSUME, on_message_callback=procesar_mensaje)
     try:
         channel.start_consuming()
